@@ -1,0 +1,24 @@
+name: aogs2018-gps
+channels:
+    - conda-forge
+    - defaults
+dependencies:
+    - python=3.6
+    - pip
+    - numpy
+    - scipy
+    - pandas
+    - xarray
+    - scikit-learn
+    - requests
+    - dask
+    - pyproj
+    - matplotlib
+    - cartopy
+    - jupyter
+    - pytest
+    - pytest-cov
+    - flake8
+    - pylint
+    - pip:
+        - https://github.com/fatiando/verde/archive/653bc289df71775c887eadda4a07aa01d558b9ca.zip
