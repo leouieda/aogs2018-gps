@@ -136,7 +136,7 @@ class Vector3D(Spline):
 
 
 def vector3d_jacobian(coordinates, force_coordinates, poisson, fudge=1e-5,
-                      depth=10, dtype="float32"):
+                      height=10, dtype="float32"):
     """
 
         |J_ee J_en J_ev| |f_e| |d_e|
@@ -152,10 +152,10 @@ def vector3d_jacobian(coordinates, force_coordinates, poisson, fudge=1e-5,
     # build a distance matrix between each data point and force.
     east, north = (datac.reshape((npoints, 1)) - forcec
                    for datac, forcec in zip(coordinates, force_coordinates))
-    r = np.sqrt(east**2 + north**2 + depth**2) + fudge
+    r = np.sqrt(east**2 + north**2 + height**2)
     # Pre-compute common terms for the Green's functions of each component
     over_r = 1/r
-    over_rz = 1/(r - depth)
+    over_rz = 1/(r + height)
     aux = (1 - 2*poisson)
     jac = np.empty((npoints*3, nforces*3), dtype=dtype)
     # J_ee
@@ -165,7 +165,7 @@ def vector3d_jacobian(coordinates, force_coordinates, poisson, fudge=1e-5,
     jac[:npoints, nforces:nforces*2] = east*north*over_r*(over_r**2 -
                                                           aux*over_rz**2)
     # J_ev
-    jac[:npoints, nforces*2:] = east*over_r*(depth*over_r**2 + aux*over_rz)
+    jac[:npoints, nforces*2:] = east*over_r*(height*over_r**2 - aux*over_rz)
     # J_ne
     jac[npoints:npoints*2, :nforces] = jac[:npoints, nforces:nforces*2]
     # J_nn
@@ -173,12 +173,13 @@ def vector3d_jacobian(coordinates, force_coordinates, poisson, fudge=1e-5,
                                                         aux*r*over_rz -
                                                         aux*(north*over_rz)**2)
     # J_nv
-    jac[npoints:npoints*2, nforces*2:] = north*over_r*(depth*over_r**2 +
+    jac[npoints:npoints*2, nforces*2:] = north*over_r*(height*over_r**2 -
                                                        aux*over_rz)
     # J_ve
-    jac[npoints*2:, :nforces] = jac[:npoints, nforces*2:]
+    jac[npoints*2:, :nforces] = east*over_r*(height*over_r**2 + aux*over_rz)
     # J_vn
-    jac[npoints*2:, nforces:nforces*2:] = jac[npoints:npoints*2, nforces*2:]
+    jac[npoints*2:, nforces:nforces*2:] = north*over_r*(height*over_r**2 +
+                                                       aux*over_rz)
     # J_vv
-    jac[npoints*2:, nforces*2:] = over_r*(1 + aux + (depth*over_r)**2)
+    jac[npoints*2:, nforces*2:] = over_r*(1 + aux + (height*over_r)**2)
     return jac
