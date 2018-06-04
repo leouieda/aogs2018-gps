@@ -13,7 +13,8 @@ import pandas as pd
 import verde as vd
 
 
-def plot_data(data, every=1, maxabs=3, pad=None, scale=300, s=10, key=30):
+def plot_data(data, every=1, maxabs=3, pad=None, scale=300, s=10, key=30,
+              cmap='seismic'):
     """
     Plot the 3 data components in 2 maps.
     """
@@ -37,11 +38,11 @@ def plot_data(data, every=1, maxabs=3, pad=None, scale=300, s=10, key=30):
     ax = axes[1]
     if data.up_velocity.ndim == 1:
         pc = ax.scatter(data.longitude, data.latitude,
-                        c=data.up_velocity, s=s, cmap='seismic',
+                        c=data.up_velocity, s=s, cmap=cmap,
                         vmin=-maxabs, vmax=maxabs, transform=crs)
     else:
         pc = ax.pcolormesh(data.longitude, data.latitude, data.up_velocity,
-                           cmap='seismic', vmin=-maxabs, vmax=maxabs,
+                           cmap=cmap, vmin=-maxabs, vmax=maxabs,
                            transform=crs)
         ax.coastlines()
     plt.colorbar(pc, ax=ax, pad=0, aspect=50).set_label('mm/yr')
