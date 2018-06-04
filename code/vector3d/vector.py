@@ -101,9 +101,10 @@ class Vector3D(Spline):
         else:
             weights = None
         self._check_weighted_exact_solution(weights)
-        data = list(data)
         if self.flip_vertical:
+            data = list(data)
             data[-1] *= -data[-1]
+            data = tuple(data)
         data = np.concatenate([i.ravel() for i in data])
         jacobian = vector3d_jacobian(coordinates[:2], self.force_coords_,
                                      self.poisson, self.depth,
