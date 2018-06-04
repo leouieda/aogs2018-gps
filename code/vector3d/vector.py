@@ -50,9 +50,10 @@ class Vector3D(Spline):
     """
 
     def __init__(self, poisson=0.5, depth=1000, fudge=1e-5, damping=None,
-                 shape=None, spacing=None, region=None):
+                 shape=None, spacing=None, region=None, flip_vertical=False):
         self.poisson = poisson
         self.depth = depth
+        self.flip_vertical = flip_vertical
         super().__init__(fudge=fudge, damping=damping, shape=shape,
                          spacing=spacing, region=region)
 
@@ -101,7 +102,8 @@ class Vector3D(Spline):
             weights = None
         self._check_weighted_exact_solution(weights)
         data = list(data)
-        data[-1] *= -data[-1]
+        if self.flip_vertical:
+            data[-1] *= -data[-1]
         data = np.concatenate([i.ravel() for i in data])
         jacobian = vector3d_jacobian(coordinates[:2], self.force_coords_,
                                      self.poisson, self.depth,
@@ -136,7 +138,8 @@ class Vector3D(Spline):
         cast = np.broadcast(*coordinates[:2])
         npoints = cast.size
         components = jac.dot(self.force_).reshape((3, npoints))
-        components[-1] *= -1
+        if self.flip_vertical:
+            components[-1] *= -1
         return tuple(comp.reshape(cast.shape) for comp in components)
 
 
