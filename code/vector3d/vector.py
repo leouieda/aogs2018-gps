@@ -49,9 +49,10 @@ class Vector3D(Spline):
 
     """
 
-    def __init__(self, poisson=0.5, fudge=1e-5, damping=None, shape=None,
-                 spacing=None, region=None):
+    def __init__(self, poisson=0.5, depth=1000, fudge=1e-5, damping=None,
+                 shape=None, spacing=None, region=None):
         self.poisson = poisson
+        self.depth = depth
         super().__init__(fudge=fudge, damping=damping, shape=shape,
                          spacing=spacing, region=region)
 
@@ -99,9 +100,12 @@ class Vector3D(Spline):
         else:
             weights = None
         self._check_weighted_exact_solution(weights)
+        data = list(data)
+        data[-1] *= -data[-1]
         data = np.concatenate([i.ravel() for i in data])
         jacobian = vector3d_jacobian(coordinates[:2], self.force_coords_,
-                                     self.poisson, self.fudge)
+                                     self.poisson, self.depth,
+                                     fudge=self.fudge)
         self.force_ = self._estimate_forces(jacobian, data, weights)
         return self
 
@@ -128,15 +132,16 @@ class Vector3D(Spline):
         """
         check_is_fitted(self, ['force_', 'force_coords_'])
         jac = vector3d_jacobian(coordinates[:2], self.force_coords_,
-                                self.poisson, self.fudge)
+                                self.poisson, self.depth, fudge=self.fudge)
         cast = np.broadcast(*coordinates[:2])
         npoints = cast.size
         components = jac.dot(self.force_).reshape((3, npoints))
+        components[-1] *= -1
         return tuple(comp.reshape(cast.shape) for comp in components)
 
 
-def vector3d_jacobian(coordinates, force_coordinates, poisson, fudge=1e-5,
-                      height=10, dtype="float32"):
+def vector3d_jacobian(coordinates, force_coordinates, poisson, depth,
+                      fudge=1e-5, dtype="float32"):
     """
 
         |J_ee J_en J_ev| |f_e| |d_e|
@@ -152,10 +157,10 @@ def vector3d_jacobian(coordinates, force_coordinates, poisson, fudge=1e-5,
     # build a distance matrix between each data point and force.
     east, north = (datac.reshape((npoints, 1)) - forcec
                    for datac, forcec in zip(coordinates, force_coordinates))
-    r = np.sqrt(east**2 + north**2 + height**2)
+    r = np.sqrt(east**2 + north**2 + depth**2)
     # Pre-compute common terms for the Green's functions of each component
     over_r = 1/r
-    over_rz = 1/(r + height)
+    over_rz = 1/(r + depth)
     aux = (1 - 2*poisson)
     jac = np.empty((npoints*3, nforces*3), dtype=dtype)
     # J_ee
@@ -165,7 +170,7 @@ def vector3d_jacobian(coordinates, force_coordinates, poisson, fudge=1e-5,
     jac[:npoints, nforces:nforces*2] = east*north*over_r*(over_r**2 -
                                                           aux*over_rz**2)
     # J_ev
-    jac[:npoints, nforces*2:] = east*over_r*(height*over_r**2 - aux*over_rz)
+    jac[:npoints, nforces*2:] = east*over_r*(depth*over_r**2 - aux*over_rz)
     # J_ne
     jac[npoints:npoints*2, :nforces] = jac[:npoints, nforces:nforces*2]
     # J_nn
@@ -173,13 +178,13 @@ def vector3d_jacobian(coordinates, force_coordinates, poisson, fudge=1e-5,
                                                         aux*r*over_rz -
                                                         aux*(north*over_rz)**2)
     # J_nv
-    jac[npoints:npoints*2, nforces*2:] = north*over_r*(height*over_r**2 -
+    jac[npoints:npoints*2, nforces*2:] = north*over_r*(depth*over_r**2 -
                                                        aux*over_rz)
     # J_ve
-    jac[npoints*2:, :nforces] = east*over_r*(height*over_r**2 + aux*over_rz)
+    jac[npoints*2:, :nforces] = east*over_r*(depth*over_r**2 + aux*over_rz)
     # J_vn
-    jac[npoints*2:, nforces:nforces*2:] = north*over_r*(height*over_r**2 +
+    jac[npoints*2:, nforces:nforces*2:] = north*over_r*(depth*over_r**2 +
                                                        aux*over_rz)
     # J_vv
-    jac[npoints*2:, nforces*2:] = over_r*(1 + aux + (height*over_r)**2)
+    jac[npoints*2:, nforces*2:] = over_r*(1 + aux + (depth*over_r)**2)
     return jac
