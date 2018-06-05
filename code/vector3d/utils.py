@@ -50,7 +50,7 @@ def plot_data(data, fname, every=1, maxabs=3, pad=None, scale=300, s=20,
     ax.quiverkey(tmp, 0.60, 0.10, key, label='{} mm/yr'.format(key),
                  coordinates='figure')
     if coords is not None:
-        ax.plot(*coords, '.k', markersize=0.5, transform=crs)
+        ax.plot(*coords, '.k', markersize=1, transform=crs)
     # Setup the axis labels and ticks
     region = vd.get_region((data.longitude, data.latitude))
     if pad is not None:
