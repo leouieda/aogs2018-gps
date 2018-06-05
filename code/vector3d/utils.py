@@ -14,7 +14,7 @@ import verde as vd
 
 
 def plot_data(data, fname, every=1, maxabs=3, pad=None, scale=300, s=20,
-              key=30, cmap='seismic'):
+              key=30, cmap='seismic', coords=None):
     """
     Plot the 3 data components in 2 maps.
     """
@@ -49,6 +49,8 @@ def plot_data(data, fname, every=1, maxabs=3, pad=None, scale=300, s=20,
     ax.set_title('Vertical velocity')
     ax.quiverkey(tmp, 0.60, 0.10, key, label='{} mm/yr'.format(key),
                  coordinates='figure')
+    if coords is not None:
+        ax.plot(*coords, '.k', markersize=0.5, transform=crs)
     # Setup the axis labels and ticks
     region = vd.get_region((data.longitude, data.latitude))
     if pad is not None:
