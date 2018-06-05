@@ -13,12 +13,12 @@ import pandas as pd
 import verde as vd
 
 
-def plot_data(data, every=1, maxabs=3, pad=None, scale=300, s=10, key=30,
-              cmap='seismic'):
+def plot_data(data, fname, every=1, maxabs=3, pad=None, scale=300, s=20,
+              key=30, cmap='seismic'):
     """
     Plot the 3 data components in 2 maps.
     """
-    fig, axes = plt.subplots(1, 2, figsize=(14, 7.5),
+    fig, axes = plt.subplots(1, 2, figsize=(13.1, 7.5),
                              subplot_kw=dict(projection=ccrs.Mercator()))
     crs = ccrs.PlateCarree()
     # Plot the horizontal components
@@ -54,15 +54,16 @@ def plot_data(data, every=1, maxabs=3, pad=None, scale=300, s=10, key=30,
     if pad is not None:
         region = vd.pad_region(region, pad)
     for ax in axes:
-        # Setup the map ticks
-        ax.set_xticks(np.arange(-123, -113, 2), crs=crs)
-        ax.set_yticks(np.arange(32, 42, 2), crs=crs)
-        ax.xaxis.set_major_formatter(LongitudeFormatter())
-        ax.yaxis.set_major_formatter(LatitudeFormatter())
         ax.add_feature(cfeature.LAND, facecolor='gray')
         ax.add_feature(cfeature.OCEAN)
         ax.set_extent(region, crs=crs)
-    plt.tight_layout(w_pad=0)
+        # Setup the map ticks
+        ax.set_xticks(np.arange(-123, -115, 2), crs=crs)
+        ax.xaxis.set_major_formatter(LongitudeFormatter())
+    axes[0].set_yticks(np.arange(34, 42, 2), crs=crs)
+    axes[0].yaxis.set_major_formatter(LatitudeFormatter())
+    plt.tight_layout(w_pad=0, pad=0)
+    fig.savefig('../../images/{}.png'.format(fname), transparent=True, dpi=300)
     return fig, axes
 
 
